@@ -4,7 +4,7 @@ frameworkVersion: "3"
 
 provider:
   name: aws
-  runtime: nodejs18.x
+  runtime: nodejs16.x
   region: eu-west-1
   # setup profile for AWS CLI.
   profile: default
@@ -36,7 +36,8 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.s3BucketName}
-        AccessControl: PublicRead
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
         WebsiteConfiguration:
           IndexDocument: index.html
           ErrorDocument: index.html
@@ -51,6 +52,15 @@ resources:
           Ref: WebAppS3Bucket
         PolicyDocument:
           Statement:
+            - Sid: "AllowPublicAccess"
+              Action:
+                - "s3:ListBucket"
+                - "s3:GetObject"
+              Resource:
+                - "arn:aws:s3:::${self:custom.s3BucketName}/*"
+                - "arn:aws:s3:::${self:custom.s3BucketName}"
+              Effect: "allow"
+              Principal: "*"
             - Sid: "AllowCloudFrontAccessIdentity"
               Effect: Allow
               Action: s3:GetObject
