@@ -8,9 +8,7 @@ export function useAvailableProducts() {
   return useQuery<AvailableProduct[], AxiosError>(
     "available-products",
     async () => {
-      const res = await axios.get<AvailableProduct[]>(
-        `${API_PATHS.productList}`
-      );
+      const res = await axios.get<AvailableProduct[]>(`${API_PATHS.products}`);
       return res.data;
     }
   );
@@ -26,10 +24,10 @@ export function useInvalidateAvailableProducts() {
 
 export function useAvailableProduct(id?: string) {
   return useQuery<AvailableProduct, AxiosError>(
-    ["product", { id }],
+    ["products", { id }],
     async () => {
       const res = await axios.get<AvailableProduct>(
-        `${API_PATHS.product}/${id}`
+        `${API_PATHS.products}/${id}`
       );
       return res.data;
     },
@@ -41,14 +39,14 @@ export function useRemoveProductCache() {
   const queryClient = useQueryClient();
   return React.useCallback(
     (id?: string) =>
-      queryClient.removeQueries(["product", { id }], { exact: true }),
+      queryClient.removeQueries(["products", { id }], { exact: true }),
     []
   );
 }
 
 export function useUpsertAvailableProduct() {
   return useMutation((values: AvailableProduct) =>
-    axios.put<AvailableProduct>(`${API_PATHS.bff}/product`, values, {
+    axios.put<AvailableProduct>(`${API_PATHS.bff}/products`, values, {
       headers: {
         Authorization: `Basic ${localStorage.getItem("authorization_token")}`,
       },
@@ -58,7 +56,7 @@ export function useUpsertAvailableProduct() {
 
 export function useDeleteAvailableProduct() {
   return useMutation((id: string) =>
-    axios.delete(`${API_PATHS.bff}/product/${id}`, {
+    axios.delete(`${API_PATHS.bff}/products/${id}`, {
       headers: {
         Authorization: `Basic ${localStorage.getItem("authorization_token")}`,
       },

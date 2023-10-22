@@ -141,3 +141,21 @@ resources:
       Value: !Ref WebAppS3Bucket
     WebAppCloudFrontDistributionOutput:
       Value: !GetAtt WebAppCloudFrontDistribution.DomainName
+
+functions:
+  getProducts:
+    handler: actualHandlers.getProducts
+    events:
+      - http:
+          path: products
+          method: get
+          cors: true
+
+  getProductById:
+    handler: actualHandlers.getProductById
+    events:
+      - http:
+          path: products/{id}
+          method: get
+          cors: true
+
