@@ -8,6 +8,7 @@ import PaperLayout from "~/components/PaperLayout/PaperLayout";
 import Typography from "@mui/material/Typography";
 import {
   useAvailableProduct,
+  useCreateProduct,
   useInvalidateAvailableProducts,
   useRemoveProductCache,
   useUpsertAvailableProduct,
@@ -21,6 +22,7 @@ export default function PageProductForm() {
   const invalidateAvailableProducts = useInvalidateAvailableProducts();
   const removeProductCache = useRemoveProductCache();
   const { data, isLoading } = useAvailableProduct(id);
+  const { mutateAsync: createProduct } = useCreateProduct();
   const { mutateAsync: upsertAvailableProduct } = useUpsertAvailableProduct();
   const onSubmit = (values: AvailableProduct) => {
     const formattedValues = AvailableProductSchema.cast(values);
@@ -30,7 +32,9 @@ export default function PageProductForm() {
           id,
         }
       : formattedValues;
-    return upsertAvailableProduct(productToSave, {
+    const action = id ? upsertAvailableProduct : createProduct;
+
+    return action(productToSave, {
       onSuccess: () => {
         invalidateAvailableProducts();
         removeProductCache(id);

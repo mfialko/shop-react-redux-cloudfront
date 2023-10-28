@@ -8,6 +8,21 @@ provider:
   region: eu-west-1
   # setup profile for AWS CLI.
   profile: default
+  environment:
+    PRODUCTS_TABLE: products
+    STOCKS_TABLE: stocks
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: 
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/products"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/stocks"
 
 plugins:
   - serverless-finch
@@ -134,6 +149,37 @@ resources:
           #   IncludeCookies: 'false'
           #   Bucket: mylogs.s3.amazonaws.com
           #   Prefix: myprefix
+  
+    ProductsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: products
+
+    StocksDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: product_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: product_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: stocks
+        
 
   ## In order to print out the hosted domain via `serverless info` we need to define the DomainName output for CloudFormation
   Outputs:
@@ -158,4 +204,15 @@ functions:
           path: products/{id}
           method: get
           cors: true
+  
+  createProduct:
+    handler: actualHandlers.createProduct
+    events:
+      - http:
+          path: products
+          method: post
+          cors: true
 
+
+
+    
