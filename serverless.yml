@@ -1,13 +1,28 @@
-service: my-store-app
+service: my-first-app-mfialko
 
 frameworkVersion: "3"
 
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs16.x
   region: eu-west-1
   # setup profile for AWS CLI.
-  # profile: node-aws
+  profile: default
+  environment:
+    PRODUCTS_TABLE: products
+    STOCKS_TABLE: stocks
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: 
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/products"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/stocks"
 
 plugins:
   - serverless-finch
@@ -19,7 +34,7 @@ plugins:
 
 custom:
   client:
-    bucketName: my-store-app
+    bucketName: my-first-app-mfialko
     distributionFolder: dist
   s3BucketName: ${self:custom.client.bucketName}
 
@@ -36,7 +51,8 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.s3BucketName}
-        AccessControl: PublicRead
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
         WebsiteConfiguration:
           IndexDocument: index.html
           ErrorDocument: index.html
@@ -51,6 +67,15 @@ resources:
           Ref: WebAppS3Bucket
         PolicyDocument:
           Statement:
+            - Sid: "AllowPublicAccess"
+              Action:
+                - "s3:ListBucket"
+                - "s3:GetObject"
+              Resource:
+                - "arn:aws:s3:::${self:custom.s3BucketName}/*"
+                - "arn:aws:s3:::${self:custom.s3BucketName}"
+              Effect: "allow"
+              Principal: "*"
             - Sid: "AllowCloudFrontAccessIdentity"
               Effect: Allow
               Action: s3:GetObject
@@ -124,6 +149,37 @@ resources:
           #   IncludeCookies: 'false'
           #   Bucket: mylogs.s3.amazonaws.com
           #   Prefix: myprefix
+  
+    ProductsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: products
+
+    StocksDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: product_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: product_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: stocks
+        
 
   ## In order to print out the hosted domain via `serverless info` we need to define the DomainName output for CloudFormation
   Outputs:
@@ -131,3 +187,32 @@ resources:
       Value: !Ref WebAppS3Bucket
     WebAppCloudFrontDistributionOutput:
       Value: !GetAtt WebAppCloudFrontDistribution.DomainName
+
+functions:
+  getProducts:
+    handler: actualHandlers.getProducts
+    events:
+      - http:
+          path: products
+          method: get
+          cors: true
+
+  getProductById:
+    handler: actualHandlers.getProductById
+    events:
+      - http:
+          path: products/{id}
+          method: get
+          cors: true
+  
+  createProduct:
+    handler: actualHandlers.createProduct
+    events:
+      - http:
+          path: products
+          method: post
+          cors: true
+
+
+
+    
