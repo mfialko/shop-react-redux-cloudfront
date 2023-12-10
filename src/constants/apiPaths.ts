@@ -2,6 +2,7 @@ const PRODUCT_SERVICE_BASE_URL =
   "https://c056e1lqt1.execute-api.eu-west-1.amazonaws.com/dev";
 const IMPORT_SERVICE_BASE_URL =
   "https://r4x7ybtgm8.execute-api.eu-west-1.amazonaws.com/dev";
+// const AUTH_SERVICE_BASE_URL = "https://cuxo4fuw32.execute-api.eu-west-1.amazonaws.com/dev/";
 
 const API_PATHS = {
   products: `${PRODUCT_SERVICE_BASE_URL}/products`,
